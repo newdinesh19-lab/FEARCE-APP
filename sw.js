@@ -1,6 +1,6 @@
 /* FEARCE service worker. Bump VERSION on every release so installed copies detect the update. */
-const VERSION = 'fearce-1.9.4';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'offline.html', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
+const VERSION = 'fearce-1.9.6';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'offline.html', 'install-check.html', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL))); self.skipWaiting(); /* new versions take over at once; the shell is fetched network-first so a reload always shows the latest build */ });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('fearce-') && k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('message', async e => {

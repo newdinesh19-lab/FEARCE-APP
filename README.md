@@ -39,3 +39,17 @@ Study data lives in the browser's local storage on each device, with an automati
 ## Limits
 - iPhone Safari may delete site data after weeks of non-use if the app is not added to the Home Screen.
 - Installation cannot be offered inside Claude's artifact viewer or a file opened from disk.
+
+## GitHub Pages under a repository subpath (for example /FEARCE/)
+All paths are relative (`./`, `icons/...`, `sw.js`), so the app works at `https://USER.github.io/FEARCE/` without changes.
+1. Put every file in this folder in the repository root (or `/docs`), keep `icons/`, and keep the empty `.nojekyll` file.
+2. Settings > Pages > deploy from the branch and folder.
+3. Open the Pages address once while online. Updates: replace the files and raise `VERSION` in `sw.js`; open copies update on the next launch, and saved study data is never touched (the service worker only caches files, it does not read or clear localStorage or IndexedDB).
+
+## v1.9.6 install fix (https://newdinesh19-lab.github.io/FEARCE-APP/)
+- Cause found: in `index.html` the `<link rel="manifest">`, theme-colour and icon tags sat inside `<body>`. Chrome only reads the manifest link from `<head>`, so it saw "no manifest" and could not install. They are now in `<head>`; nothing else in the page changed.
+- Manifest `id` is now the stable `/FEARCE-APP/` (before, `./` resolved to the site root). `start_url` `./index.html` and `scope` `./` resolve to `/FEARCE-APP/`.
+- Theme colour in the page now matches the manifest (`#4F7F58`). Removed `orientation` and `categories`.
+- `sw.js` version is `fearce-1.9.6`; old caches are deleted on activation. Study data in localStorage/IndexedDB is untouched.
+- `install-check.html`: open `https://newdinesh19-lab.github.io/FEARCE-APP/install-check.html` in Android Chrome. It lists what passes or fails on the phone and has an Install button when Chrome allows it.
+- Upload every file again, keep the `icons` folder and `.nojekyll`. After deploying, in Chrome open the page once, close all FEARCE tabs, reopen, then menu (three dots) > Install app. If an old FEARCE shortcut exists on the home screen, remove it first.

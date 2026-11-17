@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FEARCE install check</title><meta name="theme-color" content="#4F7F58"><link rel="manifest" href="manifest.webmanifest">
+<style>body{font:16px system-ui,sans-serif;margin:0;padding:16px;background:#FAF8F2;color:#1d2a20}h1{font-size:1.2rem}li{margin:6px 0;list-style:none;padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #d8e2d8}ul{padding:0}.ok{border-left:6px solid #4F7F58}.bad{border-left:6px solid #b3261e}.warn{border-left:6px solid #B8902F}small{display:block;color:#566}button{min-height:44px;padding:0 16px;border-radius:12px;border:0;background:#4F7F58;color:#fff;font:inherit}</style></head><body>
+<h1>FEARCE install check</h1><p>Open this page in Android Chrome at the same address as the app. It tests what Chrome needs before it will install FEARCE.</p><ul id="r"></ul><button id="ib" hidden>Install FEARCE</button><p><a href="index.html">Open FEARCE</a></p>
+<script>
+var R=document.getElementById('r');function add(c,t,d){var l=document.createElement('li');l.className=c;l.innerHTML='<b>'+(c=='ok'?'Pass':c=='bad'?'Fail':'Note')+':</b> '+t+(d?'<small>'+d+'</small>':'');R.appendChild(l)}
+var dp=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;var b=document.getElementById('ib');b.hidden=false;add('ok','Chrome says FEARCE can be installed','The Install button below will open the install dialog.')});
+document.getElementById('ib').onclick=function(){if(dp){dp.prompt()}};
+(async function(){
+add(location.protocol=='https:'||location.hostname=='localhost'?'ok':'bad','Secure connection (HTTPS)',location.origin);
+var link=document.querySelector('link[rel=manifest]');
+var idx=await fetch('index.html',{cache:'no-store'}).then(r=>r.text()).catch(function(){return ''});
+var head=idx.split('</head>')[0]||'';add(/rel="manifest"/.test(head)?'ok':'bad','index.html has the manifest link inside <head>',/rel="manifest"/.test(idx)&&!/rel="manifest"/.test(head)?'The link exists but is in <body>; Chrome ignores it there.':'');
+var m=null;try{var r=await fetch('manifest.webmanifest',{cache:'no-store'});add(r.ok?'ok':'bad','manifest.webmanifest loads','HTTP '+r.status+' · '+(r.headers.get('content-type')||''));m=await r.json()}catch(e){add('bad','manifest.webmanifest could not be read as JSON',String(e))}
+if(m){var base=new URL('manifest.webmanifest',location.href);
+['name','short_name','id','start_url','scope','display'].forEach(function(k){add(m[k]?'ok':'bad','manifest "'+k+'"',m[k]||'missing')});
+add(m.display=='standalone'?'ok':'bad','display is standalone',m.display);
+var st=new URL(m.start_url,base),sc=new URL(m.scope,base);add(st.pathname.indexOf(sc.pathname)==0?'ok':'bad','start_url is inside scope',st.pathname+' in '+sc.pathname);
+var has={};for(var i=0;i<m.icons.length;i++){var ic=m.icons[i];var u=new URL(ic.src,base).href;try{var rr=await fetch(u,{cache:'no-store'});var ct=rr.headers.get('content-type')||'';var bl=await rr.blob();var im=await new Promise(function(res){var x=new Image();x.onload=function(){res(x.naturalWidth+'x'+x.naturalHeight)};x.onerror=function(){res('not an image')};x.src=URL.createObjectURL(bl)});var good=rr.ok&&im==ic.sizes&&/png/.test(ct+bl.type);add(good?'ok':'bad','icon '+ic.src+' ('+ic.purpose+')','HTTP '+rr.status+' · '+ct+' · real size '+im+' · declared '+ic.sizes);if(good)has[ic.sizes]=1}catch(e){add('bad','icon '+ic.src+' failed to load',String(e))}}
+add(has['192x192']&&has['512x512']?'ok':'bad','192 and 512 PNG icons both load and match their declared size')}
+if('serviceWorker' in navigator){try{var rg=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;add('ok','Service worker registered','scope '+rg.scope)}catch(e){add('bad','Service worker failed to register',String(e))}}else add('bad','Service workers not supported in this browser')
+add(matchMedia('(display-mode: standalone)').matches?'ok':'warn','Display mode',matchMedia('(display-mode: standalone)').matches?'Running as an installed app':'Running in a browser tab');
+setTimeout(function(){if(!dp)add('warn','Chrome has not offered an install prompt (yet)','If every test above passes: update Chrome, open the link in Chrome itself (not WhatsApp, Gmail or another in-app browser), remove any older FEARCE shortcut, then reload. Chrome menu (⋮) > Install app.')},4000);
+})();
+</script></body></html>
